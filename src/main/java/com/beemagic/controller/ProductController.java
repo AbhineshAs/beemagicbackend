@@ -88,7 +88,7 @@ public class ProductController {
         Product p1 = new Product();
         p1.setTitle("Amla Infused Honey");
         p1.setPrice(499.00);
-        p1.setOldPrice(650.00);
+        p1.setOldPrice(649.00);
         p1.setCollection("INFUSED HONEY COLLECTION");
         p1.setImage("/images/amla_infused_honey.jpg");
         p1.setDescription("A powerful blend of raw organic honey and vitamin C-rich Amla (Indian Gooseberry). Strengthens immunity, aids digestion, and brings a delightful sweet-and-sour tang to your table.");
@@ -97,7 +97,7 @@ public class ProductController {
         Product p2 = new Product();
         p2.setTitle("Mango Infused Honey");
         p2.setPrice(499.00);
-        p2.setOldPrice(650.00);
+        p2.setOldPrice(649.00);
         p2.setCollection("INFUSED HONEY COLLECTION");
         p2.setImage("/images/mango_infused_honey.jpg");
         p2.setDescription("Indulge in the tropical richness of organic honey infused with sun-ripened, luscious mangoes. Perfect for sweetening desserts, spreading on warm toast, or drizzling over yogurt.");
@@ -106,7 +106,7 @@ public class ProductController {
         Product p3 = new Product();
         p3.setTitle("Strawberry Infused Honey");
         p3.setPrice(499.00);
-        p3.setOldPrice(650.00);
+        p3.setOldPrice(649.00);
         p3.setCollection("INFUSED HONEY COLLECTION");
         p3.setImage("/images/strawberry_infused_honey.jpg");
         p3.setDescription("A delightful fusion of premium honey and juicy, ripe strawberries. It delivers a vibrant berry aroma and a sweet, fruity flavour that kids and adults alike will love.");
@@ -124,7 +124,7 @@ public class ProductController {
         Product p5 = new Product();
         p5.setTitle("Turmeric Infused Honey");
         p5.setPrice(499.00);
-        p5.setOldPrice(650.00);
+        p5.setOldPrice(649.00);
         p5.setCollection("INFUSED HONEY COLLECTION");
         p5.setImage("/images/turmeric_infused_honey.jpg");
         p5.setDescription("The golden duo: raw honey combined with premium high-curcumin turmeric. Known for its potent anti-inflammatory and antioxidant benefits, with a warm, earthy flavor.");
@@ -133,7 +133,7 @@ public class ProductController {
         Product p6 = new Product();
         p6.setTitle("Thulasi Honey");
         p6.setPrice(499.00);
-        p6.setOldPrice(650.00);
+        p6.setOldPrice(649.00);
         p6.setCollection("ARTISANAL PURE HONEY");
         p6.setImage("/images/thulasi_honey.jpg");
         p6.setDescription("Pure honey infused with the sacred herbs of Thulasi (Holy Basil). Relieves respiratory congestion, calms mind, and provides a soothing, herbal sweetness.");
