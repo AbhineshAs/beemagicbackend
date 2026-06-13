@@ -3,6 +3,7 @@ package com.beemagic.controller;
 import com.beemagic.entity.User;
 import com.beemagic.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,27 +25,42 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Value("${admin.email:admin@beemagic.com}")
+    private String adminEmail;
+
+    @Value("${admin.password:admin123}")
+    private String adminPassword;
+
     // Stores Phone Number -> OTP code mapping temporarily
     private final Map<String, String> phoneOtpMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void seedAdmin() {
-        Optional<User> adminOpt = userRepository.findByEmail("admin@beemagic.com");
+        Optional<User> adminOpt = userRepository.findByEmail(adminEmail);
         if (adminOpt.isEmpty()) {
             User admin = new User();
             admin.setName("Bee Magic Admin");
-            admin.setEmail("admin@beemagic.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setEmail(adminEmail);
+            admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole("ADMIN");
             userRepository.save(admin);
         } else {
             User admin = adminOpt.get();
+            boolean updated = false;
             if (!"ADMIN".equals(admin.getRole())) {
                 admin.setRole("ADMIN");
+                updated = true;
+            }
+            if (!passwordEncoder.matches(adminPassword, admin.getPassword())) {
+                admin.setPassword(passwordEncoder.encode(adminPassword));
+                updated = true;
+            }
+            if (updated) {
                 userRepository.save(admin);
             }
         }
     }
+
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
