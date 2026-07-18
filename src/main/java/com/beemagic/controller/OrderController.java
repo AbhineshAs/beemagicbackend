@@ -5,6 +5,7 @@ import com.beemagic.entity.OrderItem;
 import com.beemagic.entity.User;
 import com.beemagic.repository.OrderRepository;
 import com.beemagic.repository.UserRepository;
+import com.beemagic.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,9 @@ public class OrderController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @PostMapping("/{userId}")
     public ResponseEntity<?> placeOrder(@PathVariable Long userId, @RequestBody OrderRequest request) {
@@ -48,9 +52,22 @@ public class OrderController {
         }).toList();
 
         order.setItems(items);
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-        return ResponseEntity.ok(order);
+        // Send confirmation email in a background thread to keep response times fast
+        try {
+            new Thread(() -> {
+                try {
+                    emailService.sendOrderConfirmationEmail(savedOrder);
+                } catch (Exception ex) {
+                    // Fail silently in the thread
+                }
+            }).start();
+        } catch (Exception ex) {
+            // Fail silently
+        }
+
+        return ResponseEntity.ok(savedOrder);
     }
 
     @GetMapping("/user/{userId}")
