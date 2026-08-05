@@ -53,6 +53,9 @@ public class Order {
     @Column
     private String paymentId;
 
+    @Column
+    private String razorpayOrderId;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> items;
 }

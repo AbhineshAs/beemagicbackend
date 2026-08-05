@@ -100,10 +100,16 @@ public class AuthController {
             }
         }
 
+        if (!emailSent) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "message", "Failed to send OTP to " + email + ". Please check server SMTP email configuration.",
+                    "emailSent", false
+            ));
+        }
+
         return ResponseEntity.ok(Map.of(
-                "message", "OTP code processed for " + targetKey + " successfully!",
-                "emailSent", emailSent,
-                "otp", otp
+                "message", "OTP verification code sent to " + email + ". Please check your inbox.",
+                "emailSent", true
         ));
     }
 

@@ -87,6 +87,13 @@ public class PaymentController {
                 return ResponseEntity.ok(response);
             }
 
+            if (orderId == null || paymentId == null || signature == null) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("status", "failure");
+                errorResponse.put("message", "Missing required Razorpay payment verification parameters.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
             boolean isValid = false;
             if (keySecret != null && !keySecret.trim().isEmpty()) {
                 try {
@@ -96,13 +103,21 @@ public class PaymentController {
                 }
             }
 
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "success");
-            return ResponseEntity.ok(response);
+            if (isValid) {
+                Map<String, String> response = new HashMap<>();
+                response.put("status", "success");
+                return ResponseEntity.ok(response);
+            } else {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("status", "failure");
+                errorResponse.put("message", "Invalid Razorpay payment signature.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
         } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "success");
-            return ResponseEntity.ok(response);
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("status", "failure");
+            errorResponse.put("message", "Payment verification error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
 }

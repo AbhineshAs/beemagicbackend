@@ -2,15 +2,15 @@ package com.beemagic.service;
 
 import com.beemagic.entity.Order;
 import com.beemagic.entity.OrderItem;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
 @Service
@@ -18,8 +18,8 @@ public class EmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    @Autowired
-    private ApplicationContext context;
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     @Value("${app.frontend-url:https://beemagic.in}")
     private String frontendUrl;
@@ -31,54 +31,22 @@ public class EmailService {
     private String mailFrom;
 
     public void sendOrderConfirmationEmail(Order order) {
-        Object mailSender = null;
-        try {
-            mailSender = context.getBean("mailSender");
-        } catch (Exception e) {
-            // mailSender bean is not present or configured
-        }
-
         if (mailSender == null) {
-            logger.warn("SMTP email sender bean is not available. Order confirmation email was skipped. Order ID: {}", order.getId());
+            logger.warn("SMTP email sender is not configured. Order confirmation email skipped. Order ID: {}", order.getId());
             return;
         }
 
         try {
-            // create MimeMessage: MimeMessage message = mailSender.createMimeMessage();
-            Method createMimeMessageMethod = mailSender.getClass().getMethod("createMimeMessage");
-            Object mimeMessage = createMimeMessageMethod.invoke(mailSender);
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
 
-            // load MimeMessageHelper and construct it:
-            // MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
-            Class<?> mimeMessageHelperClass = Class.forName("org.springframework.mail.javamail.MimeMessageHelper");
-            Class<?> mimeMessageClass = Class.forName("jakarta.mail.internet.MimeMessage");
-            Constructor<?> helperConstructor = mimeMessageHelperClass.getConstructor(mimeMessageClass, int.class, String.class);
-            
-            // MULTIPART_MODE_MIXED_RELATED is 3
-            Object helper = helperConstructor.newInstance(mimeMessage, 3, StandardCharsets.UTF_8.name());
-
-            // helper.setTo(order.getUser().getEmail());
-            Method setToMethod = mimeMessageHelperClass.getMethod("setTo", String.class);
-            setToMethod.invoke(helper, order.getUser().getEmail());
-
-            // helper.setFrom(fromAddress);
-            Method setFromMethod = mimeMessageHelperClass.getMethod("setFrom", String.class);
+            helper.setTo(order.getUser().getEmail());
             String fromAddress = (mailUsername != null && !mailUsername.trim().isEmpty()) ? mailUsername : mailFrom;
-            setFromMethod.invoke(helper, fromAddress);
+            helper.setFrom(fromAddress);
+            helper.setSubject("Bee Magic - Order Confirmed! (Order #" + order.getId() + ")");
+            helper.setText(buildOrderEmailTemplate(order), true);
 
-            // helper.setSubject(...)
-            Method setSubjectMethod = mimeMessageHelperClass.getMethod("setSubject", String.class);
-            setSubjectMethod.invoke(helper, "Bee Magic - Order Confirmed! (Order #" + order.getId() + ")");
-
-            // helper.setText(htmlContent, true);
-            Method setTextMethod = mimeMessageHelperClass.getMethod("setText", String.class, boolean.class);
-            String htmlContent = buildOrderEmailTemplate(order);
-            setTextMethod.invoke(helper, htmlContent, true);
-
-            // mailSender.send(mimeMessage);
-            Method sendMethod = mailSender.getClass().getMethod("send", mimeMessageClass);
-            sendMethod.invoke(mailSender, mimeMessage);
-
+            mailSender.send(mimeMessage);
             logger.info("Order confirmation email sent successfully for Order ID: {}", order.getId());
         } catch (Exception e) {
             logger.error("Failed to send order confirmation email for Order ID: {}", order.getId(), e);
@@ -86,39 +54,20 @@ public class EmailService {
     }
 
     public boolean sendOtpEmail(String toEmail, String otp) {
-        Object mailSender = null;
-        try {
-            mailSender = context.getBean("mailSender");
-        } catch (Exception e) {
-            // mailSender bean is not present or configured
-        }
-
         if (mailSender == null) {
-            logger.info("SMTP mailSender is not configured. Email OTP for {} is: {}", toEmail, otp);
+            logger.warn("SMTP mailSender is not available. Could not send OTP to: {}", toEmail);
             return false;
         }
 
         try {
-            Method createMimeMessageMethod = mailSender.getClass().getMethod("createMimeMessage");
-            Object mimeMessage = createMimeMessageMethod.invoke(mailSender);
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
 
-            Class<?> mimeMessageHelperClass = Class.forName("org.springframework.mail.javamail.MimeMessageHelper");
-            Class<?> mimeMessageClass = Class.forName("jakarta.mail.internet.MimeMessage");
-            Constructor<?> helperConstructor = mimeMessageHelperClass.getConstructor(mimeMessageClass, int.class, String.class);
-
-            Object helper = helperConstructor.newInstance(mimeMessage, 3, StandardCharsets.UTF_8.name());
-
-            Method setToMethod = mimeMessageHelperClass.getMethod("setTo", String.class);
-            setToMethod.invoke(helper, toEmail);
-
-            Method setFromMethod = mimeMessageHelperClass.getMethod("setFrom", String.class);
+            helper.setTo(toEmail);
             String fromAddress = (mailUsername != null && !mailUsername.trim().isEmpty()) ? mailUsername : mailFrom;
-            setFromMethod.invoke(helper, fromAddress);
+            helper.setFrom(fromAddress);
+            helper.setSubject("Bee Magic - Your Verification OTP Code");
 
-            Method setSubjectMethod = mimeMessageHelperClass.getMethod("setSubject", String.class);
-            setSubjectMethod.invoke(helper, "Bee Magic - Your Verification OTP Code");
-
-            Method setTextMethod = mimeMessageHelperClass.getMethod("setText", String.class, boolean.class);
             String htmlContent = "<!DOCTYPE html><html><body style='font-family: Arial, sans-serif; padding: 30px; background-color: #fdfaf5; text-align: center; color: #5d4037;'>" +
                     "<div style='max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; border: 1px solid #f5ebe6; box-shadow: 0 4px 15px rgba(0,0,0,0.05);'>" +
                     "<h2 style='color: #795548; margin-top: 0;'>Bee Magic Email Verification</h2>" +
@@ -126,11 +75,9 @@ public class EmailService {
                     "<div style='font-size: 36px; font-weight: 800; color: #d97706; background: #fff8eb; padding: 16px 24px; border-radius: 12px; display: inline-block; letter-spacing: 6px; margin: 20px 0; border: 1px dashed #f59e0b;'>" + otp + "</div>" +
                     "<p style='color: #a1887f; font-size: 13px;'>If you did not request this OTP, please ignore this email.</p>" +
                     "</div></body></html>";
-            setTextMethod.invoke(helper, htmlContent, true);
+            helper.setText(htmlContent, true);
 
-            Method sendMethod = mailSender.getClass().getMethod("send", mimeMessageClass);
-            sendMethod.invoke(mailSender, mimeMessage);
-
+            mailSender.send(mimeMessage);
             logger.info("OTP verification email sent directly to: {}", toEmail);
             return true;
         } catch (Exception e) {
