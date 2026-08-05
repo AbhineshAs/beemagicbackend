@@ -23,12 +23,12 @@ public class CartController {
     private UserRepository userRepository;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<List<CartItem>> getCart(@PathVariable Long userId) {
+    public ResponseEntity<List<CartItem>> getCart(@PathVariable("userId") Long userId) {
         return ResponseEntity.ok(cartItemRepository.findByUserId(userId));
     }
 
     @PostMapping("/{userId}")
-    public ResponseEntity<?> addToCart(@PathVariable Long userId, @RequestBody CartItemRequest request) {
+    public ResponseEntity<?> addToCart(@PathVariable("userId") Long userId, @RequestBody CartItemRequest request) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("User not found");
@@ -55,7 +55,7 @@ public class CartController {
     }
 
     @PutMapping("/{userId}/{itemId}")
-    public ResponseEntity<?> updateQuantity(@PathVariable Long userId, @PathVariable Long itemId, @RequestBody QuantityRequest request) {
+    public ResponseEntity<?> updateQuantity(@PathVariable("userId") Long userId, @PathVariable("itemId") Long itemId, @RequestBody QuantityRequest request) {
         Optional<CartItem> itemOpt = cartItemRepository.findById(itemId);
         if (itemOpt.isPresent() && itemOpt.get().getUser().getId().equals(userId)) {
             CartItem item = itemOpt.get();
@@ -67,7 +67,7 @@ public class CartController {
     }
 
     @DeleteMapping("/{userId}/{itemId}")
-    public ResponseEntity<?> removeFromCart(@PathVariable Long userId, @PathVariable Long itemId) {
+    public ResponseEntity<?> removeFromCart(@PathVariable("userId") Long userId, @PathVariable("itemId") Long itemId) {
         Optional<CartItem> itemOpt = cartItemRepository.findById(itemId);
         if (itemOpt.isPresent() && itemOpt.get().getUser().getId().equals(userId)) {
             cartItemRepository.delete(itemOpt.get());
@@ -78,7 +78,7 @@ public class CartController {
 
     @Transactional
     @DeleteMapping("/{userId}/clear")
-    public ResponseEntity<?> clearCart(@PathVariable Long userId) {
+    public ResponseEntity<?> clearCart(@PathVariable("userId") Long userId) {
         cartItemRepository.deleteByUserId(userId);
         return ResponseEntity.ok().build();
     }

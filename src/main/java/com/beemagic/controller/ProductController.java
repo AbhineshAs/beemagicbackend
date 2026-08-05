@@ -25,7 +25,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+    public ResponseEntity<Product> getProductById(@PathVariable("id") Long id) {
         return productRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -40,7 +40,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product productDetails, @RequestHeader(value = "X-User-Role", required = false) String role) {
+    public ResponseEntity<?> updateProduct(@PathVariable("id") Long id, @RequestBody Product productDetails, @RequestHeader(value = "X-User-Role", required = false) String role) {
         if (!"ADMIN".equals(role)) {
             return ResponseEntity.status(403).body("Access denied. Admin role required.");
         }
@@ -63,7 +63,7 @@ public class ProductController {
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable Long id, @RequestHeader(value = "X-User-Role", required = false) String role) {
+    public ResponseEntity<?> deleteProduct(@PathVariable("id") Long id, @RequestHeader(value = "X-User-Role", required = false) String role) {
         if (!"ADMIN".equals(role)) {
             return ResponseEntity.status(403).body("Access denied. Admin role required.");
         }

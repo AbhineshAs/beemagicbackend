@@ -27,7 +27,7 @@ public class OrderController {
     private EmailService emailService;
 
     @PostMapping("/{userId}")
-    public ResponseEntity<?> placeOrder(@PathVariable Long userId, @RequestBody OrderRequest request) {
+    public ResponseEntity<?> placeOrder(@PathVariable("userId") Long userId, @RequestBody OrderRequest request) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("User not found");
@@ -71,7 +71,7 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<Order> getUserOrders(@PathVariable Long userId) {
+    public List<Order> getUserOrders(@PathVariable("userId") Long userId) {
         return orderRepository.findByUserId(userId);
     }
 
@@ -84,7 +84,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<Order> getOrderById(@PathVariable("id") Long id) {
         return orderRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -92,7 +92,7 @@ public class OrderController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateOrderStatus(
-            @PathVariable Long id, 
+            @PathVariable("id") Long id, 
             @RequestBody java.util.Map<String, String> body, 
             @RequestHeader(value = "X-User-Role", required = false) String role) {
         if (!"ADMIN".equals(role)) {
@@ -166,7 +166,7 @@ public class OrderController {
 
     @PutMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestHeader(value = "X-User-Role", required = false) String role) {
         

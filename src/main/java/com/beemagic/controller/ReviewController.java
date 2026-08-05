@@ -59,12 +59,12 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
-    public List<Review> getProductReviews(@PathVariable Long productId) {
+    public List<Review> getProductReviews(@PathVariable("productId") Long productId) {
         return reviewRepository.findByProductIdOrderByCreatedAtDesc(productId);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteReview(@PathVariable Long id, @RequestHeader(value = "X-User-Role", required = false) String role) {
+    public ResponseEntity<?> deleteReview(@PathVariable("id") Long id, @RequestHeader(value = "X-User-Role", required = false) String role) {
         if (!"ADMIN".equals(role)) {
             return ResponseEntity.status(403).body("Access denied. Admin role required.");
         }
