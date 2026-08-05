@@ -30,8 +30,8 @@ public class PaymentController {
                 amount = Integer.parseInt(String.valueOf(request.get("amount")));
             }
 
-            boolean isKeyValid = keyId != null && !keyId.trim().isEmpty() 
-                    && keySecret != null && !keySecret.trim().isEmpty() 
+            boolean isKeyValid = keyId != null && !keyId.trim().isEmpty()
+                    && keySecret != null && !keySecret.trim().isEmpty()
                     && !keyId.contains("YOUR_") && !keyId.equals("rzp_test_placeholder");
 
             if (isKeyValid) {
@@ -54,7 +54,8 @@ public class PaymentController {
 
                     return ResponseEntity.ok(response);
                 } catch (Exception rzpErr) {
-                    System.err.println("Razorpay API error: " + rzpErr.getMessage() + ". Falling back to demo order mode.");
+                    System.err.println(
+                            "Razorpay API error: " + rzpErr.getMessage() + ". Falling back to demo order mode.");
                 }
             }
 
