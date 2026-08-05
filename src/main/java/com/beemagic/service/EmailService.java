@@ -85,7 +85,7 @@ public class EmailService {
         }
     }
 
-    public void sendOtpEmail(String toEmail, String otp) {
+    public boolean sendOtpEmail(String toEmail, String otp) {
         Object mailSender = null;
         try {
             mailSender = context.getBean("mailSender");
@@ -95,7 +95,7 @@ public class EmailService {
 
         if (mailSender == null) {
             logger.info("SMTP mailSender is not configured. Email OTP for {} is: {}", toEmail, otp);
-            return;
+            return false;
         }
 
         try {
@@ -131,9 +131,11 @@ public class EmailService {
             Method sendMethod = mailSender.getClass().getMethod("send", mimeMessageClass);
             sendMethod.invoke(mailSender, mimeMessage);
 
-            logger.info("OTP verification email sent successfully to: {}", toEmail);
+            logger.info("OTP verification email sent directly to: {}", toEmail);
+            return true;
         } catch (Exception e) {
             logger.error("Failed to send OTP verification email to: {}", toEmail, e);
+            return false;
         }
     }
 

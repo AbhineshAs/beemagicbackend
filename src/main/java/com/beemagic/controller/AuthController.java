@@ -91,17 +91,18 @@ public class AuthController {
         System.out.println("BEE MAGIC OTP FOR " + targetKey + " IS: " + otp);
         System.out.println("==============================================\n");
 
+        boolean emailSent = false;
         if (email != null && !email.trim().isEmpty()) {
             try {
-                emailService.sendOtpEmail(email.trim(), otp);
+                emailSent = emailService.sendOtpEmail(email.trim(), otp);
             } catch (Exception e) {
                 System.err.println("Could not send email OTP: " + e.getMessage());
             }
         }
 
         return ResponseEntity.ok(Map.of(
-                "message", "OTP code sent to " + targetKey + " successfully!",
-                "otp", otp // Sent in response to make local verification easy for user/developer testing
+                "message", "OTP code sent directly to " + targetKey + " successfully!",
+                "emailSent", emailSent
         ));
     }
 
