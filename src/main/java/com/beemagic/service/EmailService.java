@@ -85,6 +85,58 @@ public class EmailService {
         }
     }
 
+    public void sendOtpEmail(String toEmail, String otp) {
+        Object mailSender = null;
+        try {
+            mailSender = context.getBean("mailSender");
+        } catch (Exception e) {
+            // mailSender bean is not present or configured
+        }
+
+        if (mailSender == null) {
+            logger.info("SMTP mailSender is not configured. Email OTP for {} is: {}", toEmail, otp);
+            return;
+        }
+
+        try {
+            Method createMimeMessageMethod = mailSender.getClass().getMethod("createMimeMessage");
+            Object mimeMessage = createMimeMessageMethod.invoke(mailSender);
+
+            Class<?> mimeMessageHelperClass = Class.forName("org.springframework.mail.javamail.MimeMessageHelper");
+            Class<?> mimeMessageClass = Class.forName("jakarta.mail.internet.MimeMessage");
+            Constructor<?> helperConstructor = mimeMessageHelperClass.getConstructor(mimeMessageClass, int.class, String.class);
+
+            Object helper = helperConstructor.newInstance(mimeMessage, 3, StandardCharsets.UTF_8.name());
+
+            Method setToMethod = mimeMessageHelperClass.getMethod("setTo", String.class);
+            setToMethod.invoke(helper, toEmail);
+
+            Method setFromMethod = mimeMessageHelperClass.getMethod("setFrom", String.class);
+            String fromAddress = (mailUsername != null && !mailUsername.trim().isEmpty()) ? mailUsername : mailFrom;
+            setFromMethod.invoke(helper, fromAddress);
+
+            Method setSubjectMethod = mimeMessageHelperClass.getMethod("setSubject", String.class);
+            setSubjectMethod.invoke(helper, "Bee Magic - Your Verification OTP Code");
+
+            Method setTextMethod = mimeMessageHelperClass.getMethod("setText", String.class, boolean.class);
+            String htmlContent = "<!DOCTYPE html><html><body style='font-family: Arial, sans-serif; padding: 30px; background-color: #fdfaf5; text-align: center; color: #5d4037;'>" +
+                    "<div style='max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; border: 1px solid #f5ebe6; box-shadow: 0 4px 15px rgba(0,0,0,0.05);'>" +
+                    "<h2 style='color: #795548; margin-top: 0;'>Bee Magic Email Verification</h2>" +
+                    "<p style='font-size: 15px; color: #8d6e63;'>Your 6-digit OTP code to complete your Bee Magic registration is:</p>" +
+                    "<div style='font-size: 36px; font-weight: 800; color: #d97706; background: #fff8eb; padding: 16px 24px; border-radius: 12px; display: inline-block; letter-spacing: 6px; margin: 20px 0; border: 1px dashed #f59e0b;'>" + otp + "</div>" +
+                    "<p style='color: #a1887f; font-size: 13px;'>If you did not request this OTP, please ignore this email.</p>" +
+                    "</div></body></html>";
+            setTextMethod.invoke(helper, htmlContent, true);
+
+            Method sendMethod = mailSender.getClass().getMethod("send", mimeMessageClass);
+            sendMethod.invoke(mailSender, mimeMessage);
+
+            logger.info("OTP verification email sent successfully to: {}", toEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send OTP verification email to: {}", toEmail, e);
+        }
+    }
+
     private String buildOrderEmailTemplate(Order order) {
         StringBuilder itemsTable = new StringBuilder();
         for (OrderItem item : order.getItems()) {

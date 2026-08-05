@@ -2,6 +2,7 @@ package com.beemagic.controller;
 
 import com.beemagic.entity.User;
 import com.beemagic.repository.UserRepository;
+import com.beemagic.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -25,13 +26,16 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
     @Value("${admin.email:admin@beemagic.com}")
     private String adminEmail;
 
     @Value("${admin.password:admin123}")
     private String adminPassword;
 
-    // Stores Phone Number -> OTP code mapping temporarily
+    // Stores Identifier (Email/Phone) -> OTP code mapping temporarily
     private final Map<String, String> phoneOtpMap = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -64,22 +68,39 @@ public class AuthController {
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
         String phoneNumber = request.get("phoneNumber");
-        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Phone number is required!"));
+
+        String targetKey = (email != null && !email.trim().isEmpty()) ? email.trim().toLowerCase() : phoneNumber;
+        if (targetKey == null || targetKey.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email or Phone number is required!"));
         }
 
         // Generate a 6-digit OTP
         String otp = String.format("%06d", new Random().nextInt(1000000));
-        phoneOtpMap.put(phoneNumber, otp);
+        phoneOtpMap.put(targetKey, otp);
+        if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+            phoneOtpMap.put(phoneNumber.trim(), otp);
+        }
+        if (email != null && !email.trim().isEmpty()) {
+            phoneOtpMap.put(email.trim().toLowerCase(), otp);
+        }
 
         // Log clearly to the Spring Boot console output
         System.out.println("\n==============================================");
-        System.out.println("BEE MAGIC OTP FOR " + phoneNumber + " IS: " + otp);
+        System.out.println("BEE MAGIC OTP FOR " + targetKey + " IS: " + otp);
         System.out.println("==============================================\n");
 
+        if (email != null && !email.trim().isEmpty()) {
+            try {
+                emailService.sendOtpEmail(email.trim(), otp);
+            } catch (Exception e) {
+                System.err.println("Could not send email OTP: " + e.getMessage());
+            }
+        }
+
         return ResponseEntity.ok(Map.of(
-                "message", "OTP code sent to " + phoneNumber + " successfully!",
+                "message", "OTP code sent to " + targetKey + " successfully!",
                 "otp", otp // Sent in response to make local verification easy for user/developer testing
         ));
     }
@@ -96,14 +117,22 @@ public class AuthController {
             }
         }
 
-        // OTP verification step
-        String expectedOtp = phoneOtpMap.get(request.getPhoneNumber());
+        // OTP verification step (accept OTP matched by Email or Phone)
+        String expectedOtp = null;
+        if (request.getEmail() != null) {
+            expectedOtp = phoneOtpMap.get(request.getEmail().trim().toLowerCase());
+        }
+        if (expectedOtp == null && request.getPhoneNumber() != null) {
+            expectedOtp = phoneOtpMap.get(request.getPhoneNumber().trim());
+        }
+
         if (expectedOtp == null || !expectedOtp.equals(request.getOtp())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid or expired OTP code!"));
         }
 
         // Clear OTP after successful validation
-        phoneOtpMap.remove(request.getPhoneNumber());
+        if (request.getEmail() != null) phoneOtpMap.remove(request.getEmail().trim().toLowerCase());
+        if (request.getPhoneNumber() != null) phoneOtpMap.remove(request.getPhoneNumber().trim());
 
         User user = new User();
         user.setEmail(request.getEmail());
