@@ -101,8 +101,9 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(Map.of(
-                "message", "OTP code sent directly to " + targetKey + " successfully!",
-                "emailSent", emailSent
+                "message", "OTP code processed for " + targetKey + " successfully!",
+                "emailSent", emailSent,
+                "otp", otp
         ));
     }
 
