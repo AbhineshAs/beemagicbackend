@@ -27,7 +27,7 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String mailUsername;
 
-    @Value("${spring.mail.from:noreply@beemagic.com}")
+    @Value("${spring.mail.from:beemagic777@gmail.com}")
     private String mailFrom;
 
     public void sendOrderConfirmationEmail(Order order) {
@@ -152,7 +152,7 @@ public class EmailService {
                 // Footer
                 "<div style='background-color: #f5f5f4; padding: 24px; text-align: center; font-size: 14px; color: #78716c; border-top: 1px solid #e7e5e4;'>" +
                 "<p style='margin: 0 0 8px 0;'>If you have any questions, reply to this email or contact support.</p>" +
-                "<p style='margin: 0; font-weight: 600; color: #1c1917;'>© 2026 Bee Magic. All rights reserved.</p>" +
+                "<p style='margin: 0; font-weight: 600; color: #1c1917;'>© 2026 Laya Enterprises (Bee Magic). All rights reserved.</p>" +
                 "</div>" +
                 "</div>" +
                 "</body>" +
